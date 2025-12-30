@@ -1,43 +1,42 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import express from "express";
+import cors from "cors";
 import { Bot } from "grammy";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
 
 const bot = new Bot(process.env.BOT_TOKEN!);
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
+app.post("/api/form", async (req, res) => {
+  const data = req.body;
 
   try {
-    const { departure, arrive, cargo, wagonType, email } = req.body;
-
-    if (!departure || !arrive || !cargo || !wagonType || !email) {
-      return res.status(400).json({ error: "Invalid data" });
-    }
-
-    const text = `
-📨 <b>Новая заявка</b>
-
-🚉 <b>Отправление:</b> ${departure}
-🏁 <b>Назначение:</b> ${arrive}
-📦 <b>Груз:</b> ${cargo}
-🚋 <b>Тип вагона:</b> ${wagonType}
-📧 <b>Email:</b> ${email}
-`;
-
     await bot.api.sendMessage(
       process.env.CHAT_ID!,
-      text,
+      `
+📨 <b>Новая заявка</b>
+
+🚉 Отправление: ${data.departure}
+🏁 Назначение: ${data.arrive}
+📦 Груз: ${data.cargo}
+🚋 Вагон: ${data.wagonType}
+📧 Email: ${data.email}
+      `,
       { parse_mode: "HTML" }
     );
 
-    return res.status(200).json({ ok: true });
-
-  } catch (error) {
-    console.error("Telegram error:", error);
-    return res.status(500).json({ error: "Telegram error" });
+    res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Telegram error" });
   }
-}
+});
+
+const PORT = process.env.PORT || 4040;
+app.listen(PORT, () => {
+  console.log(`API running on port ${PORT}`);
+});
