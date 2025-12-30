@@ -9,14 +9,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const bot = new Bot(process.env.BOT_TOKEN!);
+const token = process.env.BOT_TOKEN;
+const chatId = process.env.CHAT_ID;
+
+if (!token) {
+  throw new Error("BOT_TOKEN is missing");
+}
+
+if (!chatId) {
+  throw new Error("CHAT_ID is missing");
+}
+
+const bot = new Bot(token);
+
+
 
 app.post("/api/form", async (req, res) => {
   const data = req.body;
 
   try {
     await bot.api.sendMessage(
-      process.env.CHAT_ID!,
+      chatId,
       `
 📨 <b>Новая заявка</b>
 
